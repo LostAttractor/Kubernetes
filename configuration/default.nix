@@ -1,10 +1,10 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   imports = [
-    ./features/nix.nix
-    ./features/fish.nix
-    ./features/avahi.nix
+    (inputs.homelab + "/features/nix")
+    (inputs.homelab + "/features/fish.nix")
+    (inputs.homelab + "/features/network/avahi")
     ./k3s
   ];
 
@@ -18,6 +18,8 @@
   networking.nftables.enable = true;
 
   sops.defaultSopsFile = ../secrets.yaml;
+
+  zramSwap.enable = false;
 
   system.stateVersion = "24.05";
 }
