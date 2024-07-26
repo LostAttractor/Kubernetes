@@ -7,6 +7,8 @@
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     deploy-rs.url = "github:serokell/deploy-rs";
     deploy-rs.inputs.nixpkgs.follows = "nixpkgs";
+    homelab.url = "github:lostattractor/homelab";
+    homelab.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -19,11 +21,11 @@
       nixosConfigurations."node@nuc9.home.lostattractor.net" = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = {
-          inherit clusterInit;
+          inherit inputs clusterInit;
         };
         modules = [
-          ./hardware/kvm
           ./configuration
+          (inputs.homelab + "/hardware/kvm")
           inputs.sops-nix.nixosModules.sops
           { networking.hostName = "node0"; }
         ];
@@ -32,11 +34,11 @@
       nixosConfigurations."node@pve.home.lostattractor.net" = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = {
-          inherit clusterInit;
+          inherit inputs clusterInit;
         };
         modules = [
-          ./hardware/kvm
           ./configuration
+          (inputs.homelab + "/hardware/kvm")
           inputs.sops-nix.nixosModules.sops
           { networking.hostName = "node1"; }
         ];
@@ -45,11 +47,11 @@
       nixosConfigurations."node@pve2.home.lostattractor.net" = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = {
-          inherit clusterInit;
+          inherit inputs clusterInit;
         };
         modules = [
-          ./hardware/kvm
           ./configuration
+          (inputs.homelab + "/hardware/kvm")
           inputs.sops-nix.nixosModules.sops
           { networking.hostName = "node2"; }
         ];
