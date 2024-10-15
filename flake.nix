@@ -22,23 +22,24 @@
         system = "x86_64-linux";
         specialArgs = {
           inherit inputs clusterInit;
+          role = "server";
         };
         modules = [
           ./configuration
-          (inputs.homelab + "/hardware/kvm")
+          (inputs.homelab + "/hardware/kvm/proxmox.nix")
           inputs.sops-nix.nixosModules.sops
           { networking.hostName = "node0"; }
         ];
       };
-      # Node@PVE.home.lostattractor.net
-      nixosConfigurations."node@pve.home.lostattractor.net" = nixpkgs.lib.nixosSystem {
+      # Node@Harvester0.home.lostattractor.net
+      nixosConfigurations."node@harvester0.home.lostattractor.net" = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = {
           inherit inputs clusterInit;
         };
         modules = [
           ./configuration
-          (inputs.homelab + "/hardware/kvm")
+          (inputs.homelab + "/hardware/kvm/kubevirt.nix")
           inputs.sops-nix.nixosModules.sops
           { networking.hostName = "node1"; }
         ];
@@ -51,9 +52,39 @@
         };
         modules = [
           ./configuration
-          (inputs.homelab + "/hardware/kvm")
+          (inputs.homelab + "/hardware/kvm/proxmox.nix")
           inputs.sops-nix.nixosModules.sops
           { networking.hostName = "node2"; }
+        ];
+      };
+      nixosConfigurations."node@ec2.lostattractor.net" = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        specialArgs = {
+          inherit inputs clusterInit;
+          exitNode = true;
+        };
+        modules = [
+          ./configuration
+          (inputs.homelab + "/hardware/ec2")
+          inputs.sops-nix.nixosModules.sops
+          { networking.hostName = "ec2"; }
+          { networking.nameservers = [ "1.1.1.1" ]; }
+          { nixpkgs.buildPlatform.system = "x86_64-linux"; }
+        ];
+      };
+      nixosConfigurations."node@lightsail.lostattractor.net" = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {
+          inherit inputs clusterInit;
+          exitNode = true;
+        };
+        modules = [
+          ./configuration
+          (inputs.homelab + "/hardware/ec2")
+          ({ lib, ... }: { boot.loader.grub.device = lib.mkForce "/dev/nvme0n1"; })
+          inputs.sops-nix.nixosModules.sops
+          { networking.hostName = "lightsail"; }
+          { networking.nameservers = [ "1.1.1.1" ]; }
         ];
       };
 
@@ -68,17 +99,29 @@
             deploy-rs.lib.x86_64-linux.activate.nixos
               nixosConfigurations."node@nuc9.home.lostattractor.net";
         };
-        nodes."node@pve.home.lostattractor.net" = {
+        nodes."node@harvester0.home.lostattractor.net" = {
           hostname = "node1.home.lostattractor.net";
           profiles.system.path =
             deploy-rs.lib.x86_64-linux.activate.nixos
-              nixosConfigurations."node@pve.home.lostattractor.net";
+              nixosConfigurations."node@harvester0.home.lostattractor.net";
         };
         nodes."node@pve2.home.lostattractor.net" = {
           hostname = "node2.home.lostattractor.net";
           profiles.system.path =
             deploy-rs.lib.x86_64-linux.activate.nixos
               nixosConfigurations."node@pve2.home.lostattractor.net";
+        };
+        nodes."node@ec2.lostattractor.net" = {
+          hostname = "ec2.lostattractor.net";
+          profiles.system.path =
+            deploy-rs.lib.aarch64-linux.activate.nixos
+              nixosConfigurations."node@ec2.lostattractor.net";
+        };
+        nodes."node@lightsail.lostattractor.net" = {
+          hostname = "lightsail.lostattractor.net";
+          profiles.system.path =
+            deploy-rs.lib.x86_64-linux.activate.nixos
+              nixosConfigurations."node@lightsail.lostattractor.net";
         };
       };
 
@@ -91,6 +134,9 @@
         ) nixosConfigurations;
         VMA = mapAttrs' (
           name: config: nameValuePair name config.config.system.build.VMA
+        ) nixosConfigurations;
+        kubevirtImage = mapAttrs' (
+          name: config: nameValuePair name config.config.system.build.kubevirtImage
         ) nixosConfigurations;
       };
     };
