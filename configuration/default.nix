@@ -4,9 +4,8 @@
     (inputs.homelab + "/features/basic.nix")
     (inputs.homelab + "/features/nix")
     (inputs.homelab + "/features/fish.nix")
-    (inputs.homelab + "/features/network/avahi")
-    ./k3s
-    ./k3s/longhorn.nix
+    ./rke2
+    ./rke2/longhorn.nix
   ];
 
   networking.useNetworkd = true;
