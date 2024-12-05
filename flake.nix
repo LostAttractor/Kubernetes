@@ -57,21 +57,6 @@
           { networking.hostName = "node2"; }
         ];
       };
-      nixosConfigurations."node@ec2.lostattractor.net" = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        specialArgs = {
-          inherit inputs clusterInit;
-          exitNode = true;
-        };
-        modules = [
-          ./configuration
-          (inputs.homelab + "/hardware/ec2")
-          inputs.sops-nix.nixosModules.sops
-          { networking.hostName = "ec2"; }
-          { networking.nameservers = [ "1.1.1.1" ]; }
-          { nixpkgs.buildPlatform.system = "x86_64-linux"; }
-        ];
-      };
       nixosConfigurations."node@lightsail.lostattractor.net" = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = {
