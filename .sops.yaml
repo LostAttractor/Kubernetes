@@ -8,7 +8,7 @@ keys:
   - &server_node1 age1magw65ax0v93df08shcqhrfc6lpdr8aqgpheuvzz7j3tj265gvlqu59kjp
   - &server_node2 age12x26stx6e9j52eqr3qf4xzdwzmusmj22jlhdjykrw47070g40pkqm0l55l
   - &server_lightsail age1g0v9zh6pja4kmg0q4ps27unayk8czx7qd9v49vgzcptylwkfzsvqqufaak
-  - &server_ali  age15nwtcfd6c3fg0pmwqjrgy9v0jf4yc450vg27ynnafchns2zmf3dqcdjqsx
+  - &server_ali age1732a9qs5zyhu3kclh8zcgl9k6jg34hjkrnymagg3kfkwylzyd44sqqpu38
 creation_rules:
   - path_regex: secrets.yaml
     key_groups:

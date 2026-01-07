@@ -34,23 +34,6 @@
           { networking.hostName = "node0-rke"; }
         ];
       };
-      # Node@Harvester0.home.lostattractor.net
-      nixosConfigurations."node@harvester0.home.lostattractor.net" = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = {
-          inherit inputs clusterInit;
-          zone = "home";
-        };
-        modules = [
-          ./configuration
-          ./nvidia.nix
-          (inputs.homelab + "/hardware/kvm/kubevirt.nix")
-          (inputs.homelab + "/features/network/avahi")
-          { services.avahi.allowInterfaces = [ "enp1s0" ]; }
-          inputs.sops-nix.nixosModules.sops
-          { networking.hostName = "node1-rke"; }
-        ];
-      };
       # Node@PVE2.home.lostattractor.net
       nixosConfigurations."node@pve2.home.lostattractor.net" = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
@@ -64,7 +47,7 @@
           (inputs.homelab + "/features/network/avahi")
           { services.avahi.allowInterfaces = [ "enp6s18" ]; }
           inputs.sops-nix.nixosModules.sops
-          { networking.hostName = "node2-rke"; }
+          { networking.hostName = "node1-rke"; }
         ];
       };
       nixosConfigurations."node@lightsail.lostattractor.net" = nixpkgs.lib.nixosSystem {
@@ -72,6 +55,7 @@
         specialArgs = {
           inherit inputs clusterInit;
           zone = "ap-northeast-1a";
+          taint = "network=low:PreferNoSchedule";
           exitNode = true;
         };
         modules = [
@@ -81,7 +65,6 @@
           ({ lib, ... }: { boot.loader.grub.device = lib.mkForce "/dev/nvme0n1"; })
           inputs.sops-nix.nixosModules.sops
           { networking.hostName = "lightsail"; }
-          { networking.nameservers = [ "1.1.1.1" ]; }
         ];
       };
       nixosConfigurations."node@ali.lostattractor.net" = nixpkgs.lib.nixosSystem {
@@ -89,16 +72,17 @@
         specialArgs = {
           inherit inputs clusterInit;
           zone = "ali-hk";
+          taint = "network=low:PreferNoSchedule";
           exitNode = true;
         };
         modules = [
           ./configuration
           ./specific/sing-box.nix
-          (inputs.homelab + "/hardware/kvm")
+          # (inputs.homelab + "/hardware/kvm")
+          ./ali.nix
           { virtualisation.docker.enable = true; }
           inputs.sops-nix.nixosModules.sops
           { networking.hostName = "ali"; }
-          { networking.nameservers = [ "1.1.1.1" ]; }
         ];
       };
 
@@ -113,14 +97,8 @@
             deploy-rs.lib.x86_64-linux.activate.nixos
               nixosConfigurations."node@nuc9.home.lostattractor.net";
         };
-        nodes."node@harvester0.home.lostattractor.net" = {
-          hostname = "node1-rke.home.lostattractor.net";
-          profiles.system.path =
-            deploy-rs.lib.x86_64-linux.activate.nixos
-              nixosConfigurations."node@harvester0.home.lostattractor.net";
-        };
         nodes."node@pve2.home.lostattractor.net" = {
-          hostname = "node2-rke.home.lostattractor.net";
+          hostname = "node1-rke.home.lostattractor.net";
           profiles.system.path =
             deploy-rs.lib.x86_64-linux.activate.nixos
               nixosConfigurations."node@pve2.home.lostattractor.net";
@@ -131,12 +109,12 @@
             deploy-rs.lib.x86_64-linux.activate.nixos
               nixosConfigurations."node@lightsail.lostattractor.net";
         };
-        nodes."node@ali.lostattractor.net" = {
-          hostname = "ali.lostattractor.net";
-          profiles.system.path =
-            deploy-rs.lib.x86_64-linux.activate.nixos
-              nixosConfigurations."node@ali.lostattractor.net";
-        };
+        # nodes."node@ali.lostattractor.net" = {
+        #   hostname = "ali.lostattractor.net";
+        #   profiles.system.path =
+        #     deploy-rs.lib.x86_64-linux.activate.nixos
+        #       nixosConfigurations."node@ali.lostattractor.net";
+        # };
       };
 
       # This is highly advised, and will prevent many possible mistakes

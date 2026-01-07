@@ -1,0 +1,15 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-ingress-nginx
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    controller:
+      allowSnippetAnnotations: true
+      config:
+        annotations-risk-level: Critical
+        strict-validate-path-type: false
+      hostPort:
+        enabled: false
+      hostNetwork: true
