@@ -16,7 +16,32 @@
   networking.useNetworkd = true;
   networking.nftables.enable = true;
 
-  networking.firewall.enable = false;
+  networking.firewall = {
+    trustedInterfaces = [
+      "tailscale0"
+      "cni0"
+    ];
+    allowedTCPPorts = [
+      80
+      443
+    ];
+  };
+
+  # NodePort packets are forwarded after DNAT and bypass the host INPUT chain.
+  networking.nftables.tables.k3s-public-boundary = {
+    family = "inet";
+    content =
+      let
+        interface = if args.zone == "home" then "enp6s18" else "ens5";
+      in
+      ''
+        chain forward {
+          type filter hook forward priority filter - 5; policy accept;
+          iifname "${interface}" ct state established,related return
+          iifname "${interface}" meta l4proto { tcp, udp } ct original proto-dst 30000-32767 counter drop
+        }
+      '';
+  };
 
   # DHCPv6或许更适合用于分发"确定的"地址, 但现在systemd networkd不支持在DHCPv6中选择拒绝某个地址簇
   systemd.network.networks."99-ethernet-default-dhcp" = lib.mkMerge [

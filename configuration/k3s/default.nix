@@ -9,12 +9,41 @@ let
   role = if (args ? role) && args.role == "server" then "server" else "agent";
   isClusterInit = config.networking.hostName == clusterInit;
   isServer = role == "server";
-
+  # K3s 1.37.0 still vendors containerd 2.3.4-k3s1. Backport the two
+  # containerd 2.3.5 security fixes until an updated K3s fork is packaged.
+  containerdSecurityPatches = [
+    (pkgs.fetchurl {
+      name = "containerd-opaque-whiteout.patch";
+      url = "https://github.com/containerd/containerd/commit/c535779652bc8d541328a36ba598088c09819b97.patch";
+      hash = "sha256-cSHHU7UPXH8fiC7ttr+ZUiL9JXX36b89DcJTBuild8o=";
+    })
+    (pkgs.fetchurl {
+      name = "containerd-execsync-cancellation.patch";
+      url = "https://github.com/containerd/containerd/commit/9ec55f024041d0641f6d79841e45c8781141ddaa.patch";
+      hash = "sha256-bvXhBAkqgLwbJrMtnmW1xt3CUAcLTmlTu/v/xP+CdMM=";
+    })
+  ];
+  patchedK3s = pkgs.k3s_1_37.override {
+    overrideBundleAttrs = old: {
+      preBuild = old.preBuild + ''
+        # containerd runs inside k3s-bin; patch its vendored source, not just
+        # the separate containerd-shim package. Vendoring omits test files.
+        chmod -R u+w vendor/github.com/containerd/containerd/v2
+        ${lib.concatMapStringsSep "\n" (patch: ''
+          ${pkgs.patchutils}/bin/filterdiff -x '*_test.go' ${patch} | \
+            patch -d vendor/github.com/containerd/containerd/v2 -p1
+        '') containerdSecurityPatches}
+      '';
+      ldflags = old.ldflags ++ [
+        "-X github.com/containerd/containerd/v2/version.Revision=7f371092+homelab.c535779.9ec55f0"
+      ];
+    };
+  };
 in
 {
   services.k3s = {
     enable = true;
-    package = pkgs.k3s_1_37;
+    package = patchedK3s;
     role = role; # Or "agent" for worker only nodes
     clusterInit = isClusterInit;
     serverAddr = lib.mkIf (!isClusterInit) "https://${clusterInit}:6443";
