@@ -1,22 +1,15 @@
-# This example uses YAML anchors which allows reuse of multiple keys 
-# without having to repeat yourself.
-# Also see https://github.com/Mic92/dotfiles/blob/master/nixos/.sops.yaml
-# for a more complex example.
+# Public recipients for the administrator and each cluster node.
 keys:
   - &admin_lostattractor 57EDCBEDDE7ABA6B44377FF2B96725F36430B3D1
-  - &server_node0 age154rkpf6mtvhly6c2wr52z2xz8mzhjkgwzpdgtr6xu0a8z8zdhe6szejaz8
-  - &server_node1 age1magw65ax0v93df08shcqhrfc6lpdr8aqgpheuvzz7j3tj265gvlqu59kjp
-  - &server_node2 age12x26stx6e9j52eqr3qf4xzdwzmusmj22jlhdjykrw47070g40pkqm0l55l
-  - &server_lightsail age1g0v9zh6pja4kmg0q4ps27unayk8czx7qd9v49vgzcptylwkfzsvqqufaak
-  - &server_ali age1732a9qs5zyhu3kclh8zcgl9k6jg34hjkrnymagg3kfkwylzyd44sqqpu38
+  - &server_node0 age1hc86ly6p7fmf4f2jq8e8v6qrfejcf8adlsjufkztw2wk7qdfkfuqs9kuc9
+  - &server_node1 age1c5w6x273wy9ywhtmpm3ljq2x0g2yvl3xtlqx4ry4emxgnnczqgsqrx0sc2
+  - &server_lightsail age1jx7u7ms5jleww5qpvd4l7p2t0jnv0eh40dvauc642uflt3jcn5psl89lr2
 creation_rules:
-  - path_regex: secrets.yaml
+  - path_regex: ^secrets\.yaml$
     key_groups:
     - pgp:
       - *admin_lostattractor
       age:
       - *server_node0
       - *server_node1
-      - *server_node2
       - *server_lightsail
-      - *server_ali

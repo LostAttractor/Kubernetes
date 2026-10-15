@@ -14,7 +14,7 @@
   outputs =
     { nixpkgs, deploy-rs, ... }@inputs:
     let
-      clusterInit = "node0-rke";
+      clusterInit = "kubenode0";
     in
     rec {
       # Node@NUC9.home.lostattractor.net
@@ -31,7 +31,7 @@
           (inputs.homelab + "/features/network/avahi")
           { services.avahi.allowInterfaces = [ "enp6s18" ]; }
           inputs.sops-nix.nixosModules.sops
-          { networking.hostName = "node0-rke"; }
+          { networking.hostName = "kubenode0"; }
         ];
       };
       # Node@PVE2.home.lostattractor.net
@@ -47,7 +47,7 @@
           (inputs.homelab + "/features/network/avahi")
           { services.avahi.allowInterfaces = [ "enp6s18" ]; }
           inputs.sops-nix.nixosModules.sops
-          { networking.hostName = "node1-rke"; }
+          { networking.hostName = "kubenode1"; }
         ];
       };
       nixosConfigurations."node@lightsail.lostattractor.net" = nixpkgs.lib.nixosSystem {
@@ -67,24 +67,6 @@
           { networking.hostName = "lightsail"; }
         ];
       };
-      nixosConfigurations."node@ali.lostattractor.net" = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = {
-          inherit inputs clusterInit;
-          zone = "ali-hk";
-          taint = "network=low:PreferNoSchedule";
-          exitNode = true;
-        };
-        modules = [
-          ./configuration
-          ./specific/sing-box.nix
-          # (inputs.homelab + "/hardware/kvm")
-          ./ali.nix
-          { virtualisation.docker.enable = true; }
-          inputs.sops-nix.nixosModules.sops
-          { networking.hostName = "ali"; }
-        ];
-      };
 
       # Deploy-RS Configuration
       deploy = {
@@ -92,13 +74,13 @@
         magicRollback = false;
 
         nodes."node@nuc9.home.lostattractor.net" = {
-          hostname = "node0-rke.home.lostattractor.net";
+          hostname = "kubenode0.home.lostattractor.net";
           profiles.system.path =
             deploy-rs.lib.x86_64-linux.activate.nixos
               nixosConfigurations."node@nuc9.home.lostattractor.net";
         };
         nodes."node@pve2.home.lostattractor.net" = {
-          hostname = "node1-rke.home.lostattractor.net";
+          hostname = "kubenode1.home.lostattractor.net";
           profiles.system.path =
             deploy-rs.lib.x86_64-linux.activate.nixos
               nixosConfigurations."node@pve2.home.lostattractor.net";
@@ -109,12 +91,6 @@
             deploy-rs.lib.x86_64-linux.activate.nixos
               nixosConfigurations."node@lightsail.lostattractor.net";
         };
-        # nodes."node@ali.lostattractor.net" = {
-        #   hostname = "ali.lostattractor.net";
-        #   profiles.system.path =
-        #     deploy-rs.lib.x86_64-linux.activate.nixos
-        #       nixosConfigurations."node@ali.lostattractor.net";
-        # };
       };
 
       # This is highly advised, and will prevent many possible mistakes
@@ -126,7 +102,7 @@
         ) nixosConfigurations;
         image = mapAttrs' (
           name: config: nameValuePair name config.config.system.build.image
-        ) nixosConfigurations;
+        ) (filterAttrs (_: config: config.config.system.build ? image) nixosConfigurations);
       };
     };
 }
