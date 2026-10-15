@@ -1,0 +1,17 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "The separate kube repository is outside this repository's scope"
+paths = ['''^kube(?:/|$)''']
+
+[[rules]]
+id = "sing-box-inline-credential"
+description = "sing-box credentials must use SOPS secret files"
+path = '''(?:^|/)specific/sing-box\.nix$'''
+regex = '''(?i)(?:password|uuid|api_token)\s*=\s*["']([^"'\r\n]+)["']'''
+secretGroup = 1
+
+[[rules.allowlists]]
+description = "Redacted credentials in preserved local stashes"
+regexes = ['''^REDACTED$''']
